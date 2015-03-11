@@ -1,0 +1,8 @@
+# sudo mkdir -p /srv/lift-poly-example/mongo-data/db
+mongo:
+  image: dockerfile/mongodb
+  command: "/usr/bin/mongod --noprealloc --smallfiles"
+  ports:
+    - "2720:27017"
+  volumes:
+    - /srv/lift-poly-example/mongo-data:/data

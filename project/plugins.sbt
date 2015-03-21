@@ -1,14 +1,11 @@
-resolvers += Resolver.url(
-  "bintray-sbt-plugin-releases",
-    url("http://dl.bintray.com/content/sbt/sbt-plugin-releases"))(
-      Resolver.ivyStylePatterns)
+resolvers += Resolver.typesafeRepo("releases")
 
-resolvers += "softprops-maven" at "http://dl.bintray.com/content/softprops/maven"
+addSbtPlugin("net.ground5hark.sbt" % "sbt-concat" % "0.1.8")
 
-addSbtPlugin("org.scala-sbt" % "sbt-closure" % "0.1.4")
+addSbtPlugin("com.typesafe.sbt" % "sbt-less" % "1.0.6")
 
-addSbtPlugin("me.lessis" % "less-sbt" % "0.2.2")
+addSbtPlugin("com.typesafe.sbt" % "sbt-uglify" % "1.0.3")
 
 addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.2.5")
 
-addSbtPlugin("com.earldouglas" % "xsbt-web-plugin" % "0.9.0")
+addSbtPlugin("com.earldouglas" % "xsbt-web-plugin" % "1.0.0")

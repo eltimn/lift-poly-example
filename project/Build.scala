@@ -1,6 +1,8 @@
 import sbt._
 import sbt.Keys._
 
+import com.typesafe.sbt.web.SbtWeb
+
 object LiftProjectBuild extends Build {
 
   import Dependencies._
@@ -20,7 +22,7 @@ object LiftProjectBuild extends Build {
         rogueLift,
         rogueIndex
       ) ++
-      test(scalatest) ++
-      container(jettyWebapp)
+      test(scalatest)
     )
+    .enablePlugins(SbtWeb)
 }

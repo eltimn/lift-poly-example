@@ -19,7 +19,7 @@ object HelloWorld extends SimpleInjector {
 
   // replace the contents of the element with id "time" with the date
    def render = {
-    "#time *" #> date.vend.map(_.toString) &
+    "#time *" #> "hola" &
     "#avatar *" #> Gravatar.imgTag("test@nowhere.com")
   }
 }

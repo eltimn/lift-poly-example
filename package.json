@@ -1,0 +1,13 @@
+{
+  "name": "lift-poly-example",
+  "devDependencies": {
+    "mocha": "latest",
+    "chai": "latest",
+    "browser-sync": "latest"
+  },
+  "scripts": {
+    "env": "env",
+    "test": "mocha ./src/test/assets/js/*.js",
+    "browser-sync": "node browser.js"
+  }
+}

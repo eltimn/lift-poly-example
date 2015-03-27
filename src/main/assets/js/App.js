@@ -1,7 +1,7 @@
-(function(window) {
-  "use strict";
+(function(exports) {
 
-  window.App = (function() {
+  exports.App = (function() {
+    "use strict";
     // the instance to return
     var inst = {};
 

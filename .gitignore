@@ -1,4 +1,5 @@
 # use glob syntax.
+node_modules
 syntax: glob
 *.ser
 *.class

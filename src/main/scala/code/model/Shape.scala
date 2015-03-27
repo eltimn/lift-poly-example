@@ -13,6 +13,9 @@ import net.liftweb.util.Helpers.tryo
 import org.bson.types.ObjectId
 import com.mongodb._
 
+import code.lib._
+
+//
 trait Shape {
   def name: String
   def description: String

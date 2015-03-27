@@ -1,1 +1,1 @@
-mongo.default.port=2720
+mongo.default.uri=127.0.0.1:2720

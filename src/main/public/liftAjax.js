@@ -10,30 +10,30 @@
     lift_ajaxRetryCount: 3,
 
     lift_ajaxHandler: function(theData, theSuccess, theFailure, responseType){
-	  var toSend = {retryCnt: 0};
-	  toSend.when = (new Date()).getTime();
-	  toSend.theData = theData;
-	  toSend.onSuccess = theSuccess;
-	  toSend.onFailure = theFailure;
-	  toSend.responseType = responseType;
-	  toSend.version = liftAjax.lift_ajaxVersion++;
+    var toSend = {retryCnt: 0};
+    toSend.when = (new Date()).getTime();
+    toSend.theData = theData;
+    toSend.onSuccess = theSuccess;
+    toSend.onFailure = theFailure;
+    toSend.responseType = responseType;
+    toSend.version = liftAjax.lift_ajaxVersion++;
 
-      // Make sure we wrap when we hit JS max int.
-      var version = liftAjax.lift_ajaxVersion
-      if ((version - (version + 1) != -1) || (version - (version - 1) != 1))
-        liftAjax.lift_ajaxVersion = 0;
+    // Make sure we wrap when we hit JS max int.
+    var version = liftAjax.lift_ajaxVersion;
+    if ((version - (version + 1) != -1) || (version - (version - 1) != 1))
+      liftAjax.lift_ajaxVersion = 0;
 
-	  if (liftAjax.lift_uriSuffix) {
-	    theData += '&' + liftAjax.lift_uriSuffix;
-	    toSend.theData = theData;
-	    liftAjax.lift_uriSuffix = undefined;
-	  }
+    if (liftAjax.lift_uriSuffix) {
+      theData += '&' + liftAjax.lift_uriSuffix;
+      toSend.theData = theData;
+      liftAjax.lift_uriSuffix = undefined;
+    }
 
-	  liftAjax.lift_ajaxQueue.push(toSend);
-	  liftAjax.lift_ajaxQueueSort();
-	  liftAjax.lift_doCycleQueueCnt++;
-	  liftAjax.lift_doAjaxCycle();
-	  return false; // buttons in forms don't trigger the form
+    liftAjax.lift_ajaxQueue.push(toSend);
+    liftAjax.lift_ajaxQueueSort();
+    liftAjax.lift_doCycleQueueCnt++;
+    liftAjax.lift_doAjaxCycle();
+    return false; // buttons in forms don't trigger the form
 
     },
 
@@ -69,9 +69,9 @@
     },
 
     lift_testAndShowAjax: function() {
-      if (liftAjax.lift_ajaxShowing && liftAjax.lift_ajaxQueue.length == 0 && liftAjax.lift_ajaxInProcess == null) {
+      if (liftAjax.lift_ajaxShowing && liftAjax.lift_ajaxQueue.length === 0 && liftAjax.lift_ajaxInProcess === null) {
         liftAjax.lift_endAjax();
-      } else if (!liftAjax.lift_ajaxShowing && (liftAjax.lift_ajaxQueue.length > 0 || liftAjax.lift_ajaxInProcess != null)) {
+      } else if (!liftAjax.lift_ajaxShowing && (liftAjax.lift_ajaxQueue.length > 0 || liftAjax.lift_ajaxInProcess !== null)) {
         liftAjax.lift_startAjax();
       }
     },

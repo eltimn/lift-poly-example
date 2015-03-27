@@ -13,10 +13,9 @@ import com.mongodb.{MongoClient, ServerAddress}
 
 // The sole mongo object for testing
 object TestMongo {
-  val mongo = new MongoClient(new ServerAddress(
-    Props.get("mongo.default.host", "127.0.0.1"),
-    Props.getInt("mongo.default.port", 27017)
-  ))
+  val mongo = new MongoClient(
+    new MongoClientURI("mongodb://"+Props.get("mongo.default.uri", "127.0.0.1:2720"))
+  )
 }
 
 /**

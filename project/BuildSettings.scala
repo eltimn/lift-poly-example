@@ -7,14 +7,6 @@ import java.security.MessageDigest
 import com.earldouglas.xsbtwebplugin.WebPlugin.{container, webSettings}
 import com.earldouglas.xsbtwebplugin.PluginKeys._
 
-import com.typesafe.sbt.web.PathMapping
-import com.typesafe.sbt.web.pipeline.Pipeline
-import com.typesafe.sbt.web.Import._
-import com.typesafe.sbt.less.Import.LessKeys
-import com.typesafe.sbt.uglify.Import._
-import com.typesafe.sbt.jshint.Import._
-import net.ground5hark.sbt.concat.Import._
-
 import sbtassembly.Plugin._
 import AssemblyKeys._
 
@@ -26,12 +18,11 @@ object BuildSettings {
     Resolver.sonatypeRepo("snapshots")
   )
 
+  val gulpTarget = settingKey[File]("Gulp target directory")
+
   // https://vaadin.com/blog/-/blogs/browsersync-and-jrebel-for-keeping-you-in-flow
   val browserSyncFile = settingKey[File]("BrowserSync file")
   val browserSync = taskKey[Unit]("Update BrowserSync file so grunt notices")
-
-  val prepareAssets = taskKey[Unit]("prepare-assets")
-  val copyVendorAssets = taskKey[Pipeline.Stage]("Copy vendor assets to dist directory")
 
   val basicSettings = Defaults.defaultSettings ++ Seq(
     name := "lift-poly-example",
@@ -41,22 +32,6 @@ object BuildSettings {
     resolvers ++= resolutionRepos
   )
 
-  val srcJs = Seq(
-    "js/App.min.js",
-    "js/views/user/Login.min.js"
-  )
-  val vendorJs = Seq(
-    "lib/jquery/jquery.min.js",
-    "lib/bootstrap/js/bootstrap.min.js",
-    "query.bsAlerts.min.js",
-    "jquery.bsFormAlerts.min.js",
-    "liftAjax.js"
-  )
-
-  val vendorCss = Seq(
-    "public/gravatar.min.css"
-  )
-
   val liftAppSettings = basicSettings ++
     webSettings ++
     assemblySettings ++
@@ -64,49 +39,10 @@ object BuildSettings {
     addCommandAlias("ccr", "~ ;container:start ;container:reload /") ++
     addCommandAlias("ccrs", "~ ;container:start ;container:reload / ;browserSync") ++
     seq(
-      LessKeys.sourceMap in Assets := false,
-      LessKeys.compress in Assets := true,
+      gulpTarget <<= (target in Compile) / "gulp",
 
-      UglifyKeys.sourceMap := false,
-      UglifyKeys.mangle := false,
-
-      Concat.parentDir := "dist",
-      Concat.groups := Seq(
-        "styles.css" -> group(Seq("less/main.min.css") ++ vendorCss),
-        "scripts.js" -> group(vendorJs ++ srcJs)
-      ),
-
-      copyVendorAssets := { mappings: Seq[PathMapping] =>
-        val webTarget = (WebKeys.webTarget in Assets).value
-        // bootstrap font icons
-        IO.copyDirectory(
-          webTarget / "web-modules/main/webjars/lib/bootstrap/fonts",
-          webTarget / "dist/fonts"
-        )
-        mappings
-      },
-
-      // pipelineStages in Assets := Seq(...
-      //
-      // which is distinct from:
-      //
-      // pipelineStages := Seq(...
-      //
-      // The former will execute only for dev mode, the latter will include the former and execute for prod mode.
-      pipelineStages in Assets := Seq(uglify, concat, copyVendorAssets),
-
-      prepareAssets := {
-        val a = (JshintKeys.jshint in Compile).value
-        val b = (LessKeys.less in Compile).value
-        val c = (WebKeys.pipeline in Assets).value
-        ()
-      },
-
-      (packageWebapp in Compile) <<= (packageWebapp in Compile) dependsOn ((compile in Compile), prepareAssets),
-      (start in container.Configuration) <<= (start in container.Configuration) dependsOn ((compile in Compile), prepareAssets),
-
-      // add managed resources, where sbt-web plugins publish to, to the webapp
-      (webappResources in Compile) <+= (WebKeys.webTarget in Assets) / "dist",
+      // add gulp stuff to webapp
+      (webappResources in Compile) <+= gulpTarget,
 
       // rename assets files with md5 checksum
       warPostProcess in Compile := {

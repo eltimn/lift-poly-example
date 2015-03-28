@@ -1,7 +1,7 @@
 (function(exports) {
+  'use strict';
 
   exports.App = (function() {
-    "use strict";
     // the instance to return
     var inst = {};
 
@@ -17,8 +17,8 @@
       * App.namespace('modules.module2');
       *
       */
-    inst.namespace = function(ns_string) {
-      var parts = ns_string.split('.'),
+    inst.namespace = function(nsString) {
+      var parts = nsString.split('.'),
           parent = inst,
           pl;
 

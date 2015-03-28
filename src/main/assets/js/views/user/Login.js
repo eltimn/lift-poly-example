@@ -1,8 +1,8 @@
-(function(exports) {
-  exports.App.namespace("views.user");
-  exports.App.views.user.Login = (function($) {
-    "use strict";
+(function(window) {
+  'use strict';
 
+  window.App.namespace('views.user');
+  window.App.views.user.Login = (function($) {
     var inst = {};
 
     inst.timeoutRtn = 0;
@@ -20,10 +20,10 @@
       * radio if something has been entered.
       */
     inst.monitorPassword = function() {
-      if (!$("#yes_password").attr("checked")) {
-        var pwd = $("#id_password").val();
+      if (!$('#yes_password').attr('checked')) {
+        var pwd = $('#id_password').val();
         if (pwd.length > 0) {
-          $("#yes_password").attr("checked", "checked");
+          $('#yes_password').attr('checked', 'checked');
         }
         else {
           inst.startMonitor();

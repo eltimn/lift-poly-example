@@ -1,8 +1,6 @@
 import sbt._
 import sbt.Keys._
 
-import com.typesafe.sbt.web.SbtWeb
-
 object LiftProjectBuild extends Build {
 
   import BuildSettings._
@@ -40,5 +38,4 @@ object LiftProjectBuild extends Build {
       container("org.eclipse.jetty" % "jetty-webapp" % Ver.jetty) ++
       test("org.scalatest" %% "scalatest" % "2.2.4")
     )
-    .enablePlugins(SbtWeb)
 }

@@ -1,0 +1,9 @@
+{
+  "js": [
+    "/jquery/dist/jquery.min.js",
+    "/bootstrap/dist/js/bootstrap.min.js"
+  ],
+  "css": [
+    "/font-awesome/css/font-awesome.min.css"
+  ]
+}

@@ -3,8 +3,7 @@ var browserSync = require("browser-sync");
 
 var config = {
   files: [
-    'target/web/dist/*.css',
-    // 'target/web/dist/*.js',
+    'target/web/dist/*.{js,css}',
     'src/main/webapp/*.html',
     // 'target/browser-sync.txt',
     process.env['HOME'] + '/.jrebel/javarebel.stats'

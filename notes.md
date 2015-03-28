@@ -7,3 +7,6 @@
 
 - run tests (mocha doesn't work, write jasmine plugin?)
 - live reload/ browser sync
+
+
+

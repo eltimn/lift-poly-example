@@ -1,5 +1,4 @@
 # use glob syntax.
-node_modules
 syntax: glob
 *.ser
 *.class
@@ -56,3 +55,7 @@ project/plugins/project
 
 # Pax Runner (for easy OSGi launching)
 runner
+
+# node
+node_modules
+bower_components

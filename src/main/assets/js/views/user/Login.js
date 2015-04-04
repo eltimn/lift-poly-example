@@ -9,6 +9,7 @@
 
     inst.init = function() {
       inst.startMonitor();
+      throw "Error2";
     };
 
     inst.startMonitor = function() {

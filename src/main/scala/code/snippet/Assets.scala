@@ -11,10 +11,9 @@ object Assets {
     if (Props.mode == Props.RunModes.Development)
       Map.empty
     else {
-      (
-        LiftRules
-          .loadResourceAsString("/assets.json")
-          .flatMap { s => tryo(JsonParser.parse(s)) }
+      (LiftRules
+        .loadResourceAsString("/assets.json")
+        .flatMap { s => tryo(JsonParser.parse(s)) }
       ) match {
         case Full(jo: JObject) => jo.values.mapValues(_.toString)
         case _ => Map.empty
@@ -22,9 +21,12 @@ object Assets {
     }
   }
 
-  private lazy val cssPath: String = "/"+assetsMap.getOrElse("styles", "styles.css")
-  private lazy val jsPath: String = "/"+assetsMap.getOrElse("scripts", "scripts.js")
+  private def buildPath(asset: String): String =
+    "/"+assetsMap.getOrElse(asset, asset)
 
-  def css = "* [href]" #> cssPath
-  def js = "* [src]" #> jsPath
+  private lazy val stylesPath: String = buildPath("styles.css")
+  private lazy val scriptsPath: String = buildPath("scripts.js")
+
+  def styles = "* [href]" #> stylesPath
+  def scripts = "* [src]" #> scriptsPath
 }

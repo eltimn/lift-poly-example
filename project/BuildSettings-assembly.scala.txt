@@ -1,0 +1,200 @@
+import sbt._
+import sbt.Keys._
+
+import java.security.MessageDigest
+
+// import com.earldouglas.xwp.XwpPlugin.{jetty, postProcess, webapp}
+import com.earldouglas.xsbtwebplugin.WebPlugin.{container, webSettings}
+import com.earldouglas.xsbtwebplugin.PluginKeys._
+
+import com.typesafe.sbt.web.PathMapping
+import com.typesafe.sbt.web.pipeline.Pipeline
+import com.typesafe.sbt.web.Import._
+import com.typesafe.sbt.less.Import.LessKeys
+import com.typesafe.sbt.uglify.Import._
+import com.typesafe.sbt.jshint.Import._
+import net.ground5hark.sbt.concat.Import._
+
+import sbtassembly.Plugin._
+import AssemblyKeys._
+
+object BuildSettings {
+  private var numReloads: Int = 0
+
+  val resolutionRepos = Seq(
+    Resolver.sonatypeRepo("releases"),
+    Resolver.sonatypeRepo("snapshots")
+  )
+
+  // https://vaadin.com/blog/-/blogs/browsersync-and-jrebel-for-keeping-you-in-flow
+  val browserSyncFile = settingKey[File]("BrowserSync file")
+  val browserSync = taskKey[Unit]("Update BrowserSync file so grunt notices")
+
+  val prepareAssets = taskKey[Unit]("prepare-assets")
+  val hashAssets = taskKey[Unit]("hash-assets")
+  val copyVendorAssets = taskKey[Pipeline.Stage]("Copy vendor assets to dist directory")
+  val digestFilter = taskKey[Pipeline.Stage]("Supply the assets that need digesting")
+
+  val basicSettings = Defaults.defaultSettings ++ Seq(
+    name := "lift-poly-example",
+    version := "0.1-SNAPSHOT",
+    scalaVersion := "2.11.5",
+    scalacOptions := Seq("-deprecation", "-unchecked", "-feature", "-language:postfixOps", "-language:implicitConversions"),
+    resolvers ++= resolutionRepos
+  )
+
+  val srcJs = Seq(
+    "js/App.min.js",
+    "js/views/user/Login.min.js"
+  )
+  val vendorJs = Seq(
+    "lib/jquery/jquery.min.js",
+    "lib/bootstrap/js/bootstrap.min.js",
+    "query.bsAlerts.min.js",
+    "jquery.bsFormAlerts.min.js",
+    "liftAjax.js"
+  )
+
+  val vendorCss = Seq(
+    "public/gravatar.min.css"
+  )
+
+  val liftAppSettings = basicSettings ++
+    webSettings ++
+    assemblySettings ++
+    addCommandAlias("pkg", "; packageWebapp; hashAssets; assembly") ++
+    addCommandAlias("ccr", "~ ;container:start ;container:reload /") ++
+    addCommandAlias("ccrs", "~ ;container:start ;container:reload / ;browserSync") ++
+    seq(
+      LessKeys.sourceMap in Assets := false,
+      LessKeys.compress in Assets := true,
+
+      UglifyKeys.sourceMap := false,
+      UglifyKeys.mangle := false,
+
+      Concat.parentDir := "dist",
+      Concat.groups := Seq(
+        "styles.css" -> group(Seq("less/main.min.css") ++ vendorCss),
+        "scripts.js" -> group(vendorJs ++ srcJs)
+      ),
+
+      digestFilter := { mappings: Seq[PathMapping] =>
+        val webTarget = (WebKeys.webTarget in Assets).value
+
+        Seq(
+          (webTarget / "dist/scripts.js", "dist/scripts.js"),
+          (webTarget / "dist/styles.css", "dist/styles.css")
+        )
+      },
+
+      copyVendorAssets := { mappings: Seq[PathMapping] =>
+        val webTarget = (WebKeys.webTarget in Assets).value
+        // bootstrap font icons
+        IO.copyDirectory(
+          webTarget / "web-modules/main/webjars/lib/bootstrap/fonts",
+          webTarget / "dist/fonts"
+        )
+        mappings
+      },
+
+      hashAssets := {
+        val webTarget = (WebKeys.webTarget in Assets).value
+
+        val digested: Seq[(String, String)] =
+          digestFile(webTarget / "dist/scripts.js") ::
+          digestFile(webTarget / "dist/styles.css") ::
+          Nil
+
+        val mapFile = (resourceManaged in Compile).value / "assets.json"
+        val mapFileMappings = digested
+          .map { case (orig, hashed) => s""" "${orig}": "${hashed}" """ }
+          .mkString(",")
+
+        IO.write(mapFile, s"{ $mapFileMappings }")
+      },
+
+      // pipelineStages in Assets := Seq(...
+      //
+      // which is distinct from:
+      //
+      // pipelineStages := Seq(...
+      //
+      // The former will execute only for dev mode, the latter will include the former and execute for prod mode.
+      pipelineStages in Assets := Seq(uglify, concat, copyVendorAssets),
+
+      // pipelineStages := Seq(digestFilter, digest, copyVendorAssets),
+
+      prepareAssets := {
+        val a = (JshintKeys.jshint in Compile).value
+        val b = (LessKeys.less in Compile).value
+        val c = (WebKeys.pipeline in Assets).value
+        ()
+      },
+
+      (packageWebapp in Compile) <<= (packageWebapp in Compile) dependsOn ((compile in Compile), prepareAssets),
+      (start in container.Configuration) <<= (start in container.Configuration) dependsOn ((compile in Compile), prepareAssets),
+
+      // add managed resources, where sbt-web plugins publish to, to the webapp (for dev)
+      (webappResources in Compile) <+= (WebKeys.webTarget in Assets) / "dist",
+
+      mainClass in assembly := Some("code.JettyLauncher"),
+
+      // This doesn't do what the `pkg` alias does above (webapp dir is not included)
+      assembly <<= assembly dependsOn (packageWar in Compile),
+
+      // include webapp dir in the assembled jar
+      resourceGenerators in Compile += Def.task {
+        val webappBase = (baseDirectory in Compile).value / "src" / "main" / "webapp"
+        for {
+          (from, to) <- webappBase ** "*" x rebase(webappBase, (resourceManaged in Compile).value / "webapp")
+        } yield {
+          Sync.copy(from, to)
+          to
+        }
+      }.taskValue,
+
+      // include assets in the assembled jar
+      resourceGenerators in Compile += Def.task {
+        val dist = (WebKeys.webTarget in Assets).value / "dist"
+        for {
+          (from, to) <- dist ** "*" x rebase(dist, (resourceManaged in Compile).value / "webapp")
+        } yield {
+          Sync.copy(from, to)
+          to
+        }
+      }.taskValue,
+
+      // include assets.json in the assembled jar and war
+      resourceGenerators in Compile += Def.task {
+        Seq((resourceManaged in Compile).value / "assets.json")
+      }.taskValue,
+
+      browserSyncFile := (target in Compile).value / "browser-sync.txt",
+      browserSync := {
+        numReloads = numReloads + 1
+        IO.write(browserSyncFile.value, numReloads.toString)
+      }
+
+    ) // ++ jetty()
+
+  lazy val noPublishing = seq(
+    publish := (),
+    publishLocal := ()
+  )
+
+  private def checksum(file: File): String = {
+    val digest = MessageDigest.getInstance("MD5")
+    digest.digest(IO.readBytes(file)).map("%02x".format(_)).mkString
+  }
+
+  private def digestFile(file: File): (String, String) = {
+    val digest = checksum(file)
+    val (base, ext) = file.baseAndExt
+    val newFilename = s"$base-$digest.$ext"
+    val newFile = new File(file.getParent, newFilename)
+
+    IO.move(file, newFile)
+
+    (file.getName, newFilename)
+  }
+}

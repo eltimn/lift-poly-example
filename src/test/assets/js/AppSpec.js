@@ -1,13 +1,13 @@
-var expect = require("chai").expect,
-    app = require("../../../main/assets/js/App").App;
+var assert = require("assert"),
+    app = require("./App").App;
 
 describe("App object", function() {
   it("initialize with settings", function() {
     app.init({x: "hola"});
-    expect(app.settings.x).to.equal("hola");
+    assert.equal(app.settings.x, "hola");
   });
   it("create a namespace", function() {
     app.namespace("views.test");
-    expect(app.views).to.have.property('test');
+    assert(app.views.hasOwnProperty("test"));
   });
 });

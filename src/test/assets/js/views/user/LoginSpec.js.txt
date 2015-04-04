@@ -1,0 +1,10 @@
+var assert = require("assert"),
+    app = require("../../App").App,
+    login = require("./Login").App.views.user.Login;
+
+describe("Login object", function() {
+  it("Login", function() {
+    app.init();
+    assert.equal(login.timeoutRtn, 0);
+  });
+});

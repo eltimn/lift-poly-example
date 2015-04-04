@@ -1,9 +1,17 @@
-- move file lists to .json
+- source maps (won't work because it creates a map for each individual file)
 
-- source maps (not needed for the way we setup things, maybe for javascript since we uglify now and css since we compress the less)
-- requireJs (or webpack)
-- mongoUrl
-- gulp
+- Login.js test (requires calling App.init first)
 
-- run tests (mocha doesn't work, write jasmine plugin?)
-- live reload/ browser sync
+
+
+
+- move file lists to .json (would require a json parser dependency for sbt)
+
+- requireJs (or webpack) - put on diff branch
+
+
+
+sbt-digest
+==========
+
+md5 value is put in the same directory as the original file. Need to be able to put that where it can be loaded inside Scala in either an assembled jar or a war.

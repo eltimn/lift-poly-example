@@ -9,7 +9,7 @@ import mongodb._
 import util._
 import util.Helpers.randomString
 
-import com.mongodb.{MongoClient, ServerAddress}
+import com.mongodb._
 
 // The sole mongo object for testing
 object TestMongo {

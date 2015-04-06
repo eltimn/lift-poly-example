@@ -1,6 +1,8 @@
 import sbt._
 import sbt.Keys._
 
+import com.typesafe.sbt.web.SbtWeb
+
 object LiftProjectBuild extends Build {
 
   import BuildSettings._
@@ -31,11 +33,13 @@ object LiftProjectBuild extends Build {
         "com.foursquare"    %% "rogue-lift"                    % "2.5.1" intransitive(),
         "com.foursquare"    %% "rogue-index"                   % "2.5.1" intransitive(),
         "org.eclipse.jetty" % "jetty-server"                   % Ver.jetty,
-        "org.eclipse.jetty" % "jetty-webapp"                   % Ver.jetty,
+        "org.eclipse.jetty" % "jetty-webapp"                   % Ver.jetty
+      ) ++
+      provided(
         "org.webjars"       % "jquery"                         % "2.1.3",
         "org.webjars"       % "bootstrap"                      % "3.3.4"
       ) ++
       container("org.eclipse.jetty" % "jetty-webapp" % Ver.jetty) ++
       test("org.scalatest" %% "scalatest" % "2.2.4")
-    )
+    ).enablePlugins(SbtWeb)
 }

@@ -13,6 +13,7 @@ import com.typesafe.sbt.less.Import.LessKeys
 import com.typesafe.sbt.uglify.Import._
 import com.typesafe.sbt.jshint.Import._
 import com.typesafe.sbt.mocha.Import._
+import com.typesafe.sbt.rjs.Import._
 import net.ground5hark.sbt.concat.Import._
 
 object BuildSettings {
@@ -23,9 +24,11 @@ object BuildSettings {
     Resolver.sonatypeRepo("snapshots")
   )
 
-  // val prepareAssets = taskKey[Unit]("prepare-assets")
+  val prepareAssets = taskKey[Unit]("prepare-assets")
   val copyVendorAssets = taskKey[Pipeline.Stage]("Copy vendor assets to dist directory")
   val assetDist = settingKey[File]("Asset dist directory")
+  val webjarsDir = settingKey[File]("WebJars directory")
+  val webappDir = settingKey[File]("Webapp directory")
 
   // https://vaadin.com/blog/-/blogs/browsersync-and-jrebel-for-keeping-you-in-flow
   val browserSyncFile = settingKey[File]("BrowserSync file")
@@ -60,6 +63,10 @@ object BuildSettings {
     addCommandAlias("ccr", "~ ;container:start ;container:reload /") ++
     addCommandAlias("ccrs", "~ ;container:start ;container:reload / ;browserSync") ++
     seq(
+      assetDist := (WebKeys.webTarget in Assets).value / "dist",
+      webjarsDir := (WebKeys.webTarget in Assets).value / "web-modules" / "main" / "webjars",
+      webappDir := baseDirectory.value / "src" / "main" / "webapp",
+
       LessKeys.sourceMap in Assets := false,
       LessKeys.compress in Assets := true,
 
@@ -72,34 +79,54 @@ object BuildSettings {
         "scripts.js" -> group(vendorJs ++ srcJs)
       ),
 
-      assetDist := (WebKeys.webTarget in Assets).value / "dist",
+      RjsKeys.appDir := webappDir.value,
+      // RjsKeys.baseUrl := "js",
+      RjsKeys.mainConfig := "common",
+      RjsKeys.dir := baseDirectory.value,
+      RjsKeys.modules := Seq(
+        WebJs.JS.Object(
+          "name" -> "common",
+          "include" -> Seq(
+            "jquery",
+            "bootstrap"
+          )
+        ),
+        WebJs.JS.Object(
+          "name" -> "user/login",
+          "exclude" -> Seq(
+            "common"
+          )
+        )
+      ),
 
       copyVendorAssets := { mappings: Seq[PathMapping] =>
-        val web = (WebKeys.webTarget in Assets).value
+        val web = webjarsDir.value / "lib"
         val dist = assetDist.value
 
         // bootstrap font icons
         IO.copyDirectory(
-          web / "web-modules/main/webjars/lib/bootstrap/fonts",
+          web / "bootstrap" / "fonts",
           dist / "fonts"
         )
         mappings
       },
 
       pipelineStages in Assets := Seq(uglify, concat, copyVendorAssets),
+      pipelineStages := Seq(rjs),
 
-      /*prepareAssets := {
+      prepareAssets := {
         val a = (JshintKeys.jshint in Compile).value
         val b = (LessKeys.less in Compile).value
         val c = (WebKeys.pipeline in Assets).value
         ()
-      },*/
+      },
 
       (packageWebapp in Compile) <<= (packageWebapp in Compile) dependsOn ((compile in Compile), MochaKeys.mocha),
-      (start in container.Configuration) <<= (start in container.Configuration) dependsOn ((compile in Compile), MochaKeys.mocha),
+      (start in container.Configuration) <<= (start in container.Configuration) dependsOn ((compile in Compile), prepareAssets),
 
       // add assetDist, where sbt-web plugins publish to, to the webapp
       (webappResources in Compile) <+= assetDist,
+      (webappResources in Compile) <+= webjarsDir,
 
       // rename assets files with md5 checksum
       warPostProcess in Compile := {

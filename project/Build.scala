@@ -37,7 +37,8 @@ object LiftProjectBuild extends Build {
       ) ++
       compile(
         "org.webjars"       % "jquery"                         % "2.1.3",
-        "org.webjars"       % "bootstrap"                      % "3.3.4"
+        "org.webjars"       % "bootstrap"                      % "3.3.4",
+        "org.webjars"       % "requirejs"                      % "2.1.16"
       ) ++
       container("org.eclipse.jetty" % "jetty-webapp" % Ver.jetty) ++
       test("org.scalatest" %% "scalatest" % "2.2.4")

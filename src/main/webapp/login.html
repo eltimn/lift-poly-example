@@ -58,10 +58,11 @@
     </form>
   </div>
   <tail>
-    <script>
-    $(document).ready(function() {
-      App.views.user.Login.init();
-    });
+    <script src="/lib/requirejs/require.js"></script>
+    <script type="text/javascript">
+      require(['js/common'], function(common) {
+        require(['user/login']);
+      });
     </script>
   </tail>
 </div>

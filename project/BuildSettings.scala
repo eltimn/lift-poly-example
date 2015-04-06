@@ -7,11 +7,16 @@ import java.security.MessageDigest
 import com.earldouglas.xsbtwebplugin.WebPlugin.{container, webSettings}
 import com.earldouglas.xsbtwebplugin.PluginKeys._
 
+import com.typesafe.sbt.web.Import._
+
 import sbtassembly.Plugin._
 import AssemblyKeys._
 
 object BuildSettings {
   private var numReloads: Int = 0
+
+  val webjarsDir = settingKey[File]("WebJars directory")
+  val webappDir = settingKey[File]("Webapp directory")
 
   val resolutionRepos = Seq(
     Resolver.sonatypeRepo("releases"),
@@ -39,10 +44,17 @@ object BuildSettings {
     addCommandAlias("ccr", "~ ;container:start ;container:reload /") ++
     addCommandAlias("ccrs", "~ ;container:start ;container:reload / ;browserSync") ++
     seq(
+      webjarsDir := (WebKeys.webTarget in Assets).value / "web-modules" / "main" / "webjars",
+      webappDir := baseDirectory.value / "src" / "main" / "webapp",
+
       gulpTarget <<= (target in Compile) / "gulp",
 
       // add gulp stuff to webapp
       (webappResources in Compile) <+= gulpTarget,
+      (webappResources in Compile) <+= webjarsDir,
+
+      (start in container.Configuration) <<=
+        (start in container.Configuration) dependsOn ((compile in Compile), (WebKeys.pipeline in Assets)),
 
       // rename assets files with md5 checksum
       warPostProcess in Compile := {
